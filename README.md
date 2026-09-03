@@ -85,15 +85,662 @@ git add ファイル名
 
 ## 1-7. Gitの基本的な流れ
 
+# Gitの基本的な作業の流れ
+
+Gitを使った開発では、一般的に次の順番で作業する。
+
 ```text
-作業ファイル
-    ↓ git add
-ステージングエリア
-    ↓ git commit
-ローカルリポジトリ
-    ↓ git push
-リモートリポジトリ（GitHub）
+1. リモートの最新状態を取得
+        ↓
+2. 作業用ブランチを作成
+        ↓
+3. ファイルを編集
+        ↓
+4. 変更内容を確認
+        ↓
+5. 変更をステージング
+        ↓
+6. 変更をコミット
+        ↓
+7. mainの最新状態を取り込む
+        ↓
+8. ブランチをマージ
+        ↓
+9. コンフリクトがあれば解消
+        ↓
+10. GitHubへプッシュ
+        ↓
+11. 不要になったブランチを削除
 ```
+
+---
+
+## 1. リモートリポジトリの最新状態を取得する
+
+作業を始める前に、現在のブランチを確認する。
+
+```bash
+git branch
+```
+
+`main`以外のブランチにいる場合は、`main`へ切り替える。
+
+```bash
+git switch main
+```
+
+次に、GitHub上の最新状態をローカルへ取り込む。
+
+```bash
+git pull origin main
+```
+
+すでにローカルの`main`とGitHubの`main`が関連付けられている場合は、次のコマンドだけでもよい。
+
+```bash
+git pull
+```
+
+最初に`pull`しておくことで、古い状態のコードを使って作業を始めることを防げる。
+
+---
+
+## 2. 作業用ブランチを作成する
+
+通常は、`main`ブランチを直接編集せず、作業内容ごとに新しいブランチを作成する。
+
+```bash
+git switch -c ブランチ名
+```
+
+例：
+
+```bash
+git switch -c feature
+```
+
+このコマンドは、次の2つの操作を同時に行う。
+
+1. `feature`ブランチを作成する
+2. 作成した`feature`ブランチへ切り替える
+
+現在のブランチを確認する。
+
+```bash
+git branch
+```
+
+表示例：
+
+```text
+* feature
+  main
+```
+
+`*`が付いているブランチが、現在作業しているブランチである。
+
+従来の`checkout`を使う場合は、次のように入力する。
+
+```bash
+git checkout -b feature
+```
+
+---
+
+## 3. ファイルを作成・編集する
+
+作業用ブランチ上で、必要なファイルを作成または編集する。
+
+今回の練習では、次のコマンドで`memo.txt`に文章を追加した。
+
+```bash
+echo "featureブランチで編集しました" >> memo.txt
+```
+
+Flutter開発の場合は、エディタを使ってDartファイルなどを編集する。
+
+例：
+
+```text
+lib/main.dart
+lib/pages/home_page.dart
+pubspec.yaml
+```
+
+この段階では、ファイルを変更しただけであり、まだGitの履歴には保存されていない。
+
+---
+
+## 4. 変更内容を確認する
+
+変更したファイルを確認する。
+
+```bash
+git status
+```
+
+表示例：
+
+```text
+Changes not staged for commit:
+  modified: memo.txt
+```
+
+`Changes not staged for commit`は、ファイルは変更されているが、まだステージングされていない状態を表す。
+
+実際にどの部分が変更されたか確認する場合は、次のコマンドを使用する。
+
+```bash
+git diff
+```
+
+コミットする前に、不要な変更や間違いが含まれていないか確認する。
+
+---
+
+## 5. 変更をステージングする
+
+コミットに含めたいファイルをステージングエリアへ追加する。
+
+```bash
+git add ファイル名
+```
+
+例：
+
+```bash
+git add memo.txt
+```
+
+複数の変更をまとめて追加する場合は、次のコマンドを使用できる。
+
+```bash
+git add .
+```
+
+ただし、`git add .`はすべての変更を追加するため、不要なファイルまで含まれていないか`git status`で確認する必要がある。
+
+ステージング後の状態を確認する。
+
+```bash
+git status
+```
+
+表示例：
+
+```text
+Changes to be committed:
+  modified: memo.txt
+```
+
+これは、`memo.txt`が次のコミットに含まれる状態を表している。
+
+---
+
+## 6. 変更をコミットする
+
+ステージングした変更をローカルリポジトリの履歴として保存する。
+
+```bash
+git commit -m "変更内容の説明"
+```
+
+例：
+
+```bash
+git commit -m "featureブランチでメモを更新"
+```
+
+コミットメッセージには、何を変更したのか分かる説明を書く。
+
+良い例：
+
+```bash
+git commit -m "ログイン画面を追加"
+git commit -m "入力チェックの不具合を修正"
+git commit -m "ホーム画面のレイアウトを調整"
+```
+
+内容が分かりにくい例：
+
+```bash
+git commit -m "変更"
+git commit -m "修正"
+git commit -m "作業"
+```
+
+コミット後は、履歴を確認する。
+
+```bash
+git log --oneline
+```
+
+---
+
+## 7. 必要に応じて作業とコミットを繰り返す
+
+1回の作業ですべてをまとめてコミットする必要はない。
+
+作業内容を適切な単位に分けて、次の流れを繰り返す。
+
+```text
+ファイルを編集
+    ↓
+git statusで確認
+    ↓
+git add
+    ↓
+git commit
+```
+
+例えばFlutterアプリの場合は、次のように分けられる。
+
+```text
+1回目：画面を作成
+2回目：ボタンの処理を追加
+3回目：表示の不具合を修正
+```
+
+履歴を分けておくと、後から変更内容を確認しやすくなる。
+
+---
+
+## 8. mainブランチの最新状態を確認する
+
+作業中に、他の人がGitHub上の`main`を更新している可能性がある。
+
+そのため、統合する前に`main`の最新状態を取得する。
+
+まず、作業中の変更がすべてコミットされていることを確認する。
+
+```bash
+git status
+```
+
+次の表示になっていれば、すべてコミットされている。
+
+```text
+nothing to commit, working tree clean
+```
+
+`main`へ切り替える。
+
+```bash
+git switch main
+```
+
+GitHub上の最新状態を取得する。
+
+```bash
+git pull origin main
+```
+
+---
+
+## 9. 作業用ブランチをmainへマージする
+
+最新状態になった`main`へ、作業用ブランチの変更を統合する。
+
+現在地が`main`であることを確認する。
+
+```bash
+git branch
+```
+
+表示例：
+
+```text
+  feature
+* main
+```
+
+次に、`feature`ブランチを`main`へ統合する。
+
+```bash
+git merge feature
+```
+
+ここで重要なのは、`git merge feature`は「現在いるブランチへ`feature`を統合する」という意味である。
+
+そのため、先に`main`へ切り替えてから実行する必要がある。
+
+```text
+featureで作業
+    ↓
+mainへ切り替える
+    ↓
+mainにfeatureをマージ
+```
+
+正しい操作：
+
+```bash
+git switch main
+git merge feature
+```
+
+---
+
+## 10. マージに成功した場合
+
+変更箇所が重なっていなければ、Gitが自動的に統合する。
+
+表示例：
+
+```text
+Updating b59c42d..8ffac42
+Fast-forward
+memo.txt | 1 +
+1 file changed, 1 insertion(+)
+```
+
+`Fast-forward`は、履歴をそのまま前へ進める形でマージできたことを表す。
+
+マージ後は履歴を確認する。
+
+```bash
+git log --oneline --graph --all
+```
+
+---
+
+## 11. コンフリクトが発生した場合
+
+複数のブランチで同じファイルの同じ場所を異なる内容に変更すると、コンフリクトが発生する場合がある。
+
+表示例：
+
+```text
+CONFLICT (content): Merge conflict in memo.txt
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+これは、Gitがどちらの変更を採用すればよいか判断できなかった状態である。
+
+ファイルを開くと、次のような目印が表示される。
+
+```text
+<<<<<<< HEAD
+mainブランチの内容
+=======
+featureブランチの内容
+>>>>>>> feature
+```
+
+それぞれの意味は次のとおり。
+
+- `<<<<<<< HEAD`から`=======`まで：現在いるブランチの内容
+- `=======`から`>>>>>>> feature`まで：統合するブランチの内容
+
+どちらを残すか、または両方を残すか判断し、ファイルを手動で修正する。
+
+修正後は、次のような目印をすべて削除する。
+
+```text
+<<<<<<< HEAD
+=======
+>>>>>>> feature
+```
+
+修正したファイルをステージングする。
+
+```bash
+git add memo.txt
+```
+
+コンフリクトの解消をコミットする。
+
+```bash
+git commit -m "コンフリクトを解消"
+```
+
+状態を確認する。
+
+```bash
+git status
+```
+
+次の表示になれば、コンフリクトの解消とマージが完了している。
+
+```text
+nothing to commit, working tree clean
+```
+
+---
+
+## 12. マージしたmainをGitHubへプッシュする
+
+ローカルの`main`へマージしただけでは、GitHub上の`main`にはまだ反映されていない。
+
+GitHubへ送信するために`push`を実行する。
+
+```bash
+git push origin main
+```
+
+すでに送信先が設定されている場合は、次のコマンドだけでもよい。
+
+```bash
+git push
+```
+
+これで、ローカルの`main`とGitHub上の`main`が同じ状態になる。
+
+```text
+ローカルのfeature
+        ↓ merge
+ローカルのmain
+        ↓ push
+GitHub上のmain
+```
+
+---
+
+## 13. 不要になったブランチを削除する
+
+`feature`の変更が`main`へ正しく統合されたことを確認したら、ローカルの作業用ブランチを削除できる。
+
+```bash
+git branch -d feature
+```
+
+`-d`は、マージ済みのブランチを安全に削除するための指定である。
+
+ブランチを削除しても、`main`へ統合された変更やコミット履歴は消えない。
+
+削除後はブランチ一覧を確認する。
+
+```bash
+git branch
+```
+
+表示例：
+
+```text
+* main
+```
+
+---
+
+# GitHubを使った基本的な一連のコマンド
+
+作業開始からGitHubへの送信までをまとめると、次のようになる。
+
+```bash
+# 1. mainへ移動
+git switch main
+
+# 2. GitHubの最新状態を取得
+git pull origin main
+
+# 3. 作業用ブランチを作成して移動
+git switch -c feature
+
+# 4. ファイルを編集したあと、状態を確認
+git status
+git diff
+
+# 5. 変更をステージング
+git add ファイル名
+
+# 6. 変更をコミット
+git commit -m "変更内容の説明"
+
+# 7. mainへ戻る
+git switch main
+
+# 8. mainの最新状態を再度取得
+git pull origin main
+
+# 9. 作業用ブランチをmainへ統合
+git merge feature
+
+# 10. GitHubへ送信
+git push origin main
+
+# 11. 統合済みのブランチを削除
+git branch -d feature
+```
+
+コンフリクトが発生した場合は、マージとプッシュの間に解消作業を行う。
+
+```bash
+# ファイルを手動で修正したあと
+git add ファイル名
+git commit -m "コンフリクトを解消"
+git push origin main
+```
+
+---
+
+# 今回の実習で行った流れ
+
+今回の練習では、次の順番で操作した。
+
+```text
+git-practiceを作成
+        ↓
+git initでローカルリポジトリ化
+        ↓
+memo.txtを作成
+        ↓
+git addでステージング
+        ↓
+git commitで履歴を保存
+        ↓
+featureブランチを作成して切り替え
+        ↓
+feature側でmemo.txtを編集してコミット
+        ↓
+mainブランチへ切り替え
+        ↓
+main側でも同じ場所を編集してコミット
+        ↓
+git merge featureを実行
+        ↓
+コンフリクトが発生
+        ↓
+両方の内容を残して手動で解決
+        ↓
+解決したファイルをaddしてcommit
+        ↓
+GitHubのリモートリポジトリを登録
+        ↓
+git pushでGitHubへ送信
+        ↓
+GitHub上でmemo.txtを編集
+        ↓
+git pullでローカルへ取り込み
+```
+
+---
+
+# 個人作業とチーム開発の違い
+
+今回の練習では、ローカルで`feature`を`main`へマージしてから、GitHubへプッシュした。
+
+```text
+ローカルでブランチを作る
+    ↓
+ローカルでコミット
+    ↓
+ローカルでmainへマージ
+    ↓
+mainをGitHubへプッシュ
+```
+
+チーム開発では、作業用ブランチを先にGitHubへプッシュし、GitHub上でプルリクエストを作成する方法がよく使われる。
+
+```text
+ローカルでブランチを作る
+    ↓
+ローカルでコミット
+    ↓
+作業用ブランチをGitHubへプッシュ
+    ↓
+GitHubでプルリクエストを作成
+    ↓
+内容を確認してもらう
+    ↓
+GitHub上でmainへマージ
+    ↓
+ローカルでgit pull
+```
+
+作業用ブランチをGitHubへ初めて送る場合は、次のように入力する。
+
+```bash
+git push -u origin feature
+```
+
+GitHub上でマージされたあと、ローカルの`main`を最新状態にする。
+
+```bash
+git switch main
+git pull origin main
+```
+
+---
+
+# まとめ
+
+Gitの基本的な作業は、次の4段階に分けて考えると理解しやすい。
+
+## 変更を保存する段階
+
+```text
+ファイルを編集
+    ↓
+git add
+    ↓
+git commit
+```
+
+## ブランチを統合する段階
+
+```text
+git switch main
+    ↓
+git pull
+    ↓
+git merge feature
+```
+
+## GitHubへ共有する段階
+
+```text
+git push
+```
+
+## GitHubの変更を取り込む段階
+
+```text
+git pull
+```
+
+`commit`はローカルへ履歴を保存する操作、`push`はその履歴をGitHubへ送る操作である。
+
+`merge`は別のブランチの変更を現在のブランチへ統合する操作であり、`pull`はGitHub上の変更をローカルへ取り込む操作である。
 
 GitHub側の変更は、`git pull`でローカルリポジトリへ取り込む。
 
